@@ -2,69 +2,17 @@ sudo: required
 services:
   - docker
 
-env:
-  - NODE_VERSION=8-jessie
-  - NODE_VERSION=6-jessie
-
+before_install:
+- docker pull node:8-onbuild
+install:
+- docker build -t probot-hello .
 script:
-  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-  - docker build -t node:$NODE_VERSION --build-arg NODE_IMAGE="node:${NODE_VERSION}" .
-  - docker images
-  - docker tag node:$NODE_VERSION $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD)
-  - docker push $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD)
-
-# stages allow us to order stuff. test stage is first, basicly the above.
-stages:
-  - test
-  - npm-targets  # Here we do some specific npm stuff. i.e. test, lint, coverage
-
-jobs:
-  include:
-    - stage : npm-targets
-      name: "Test 8-jessie test"
-      install: skip
-      script:
-      - docker run --rm $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD) npm run $NPM_TARGET
-      env:
-      - NODE_VERSION=8-jessie
-      - NPM_TARGET=test
-    - stage : npm-targets
-      name: "Test 8-jessie lint"
-      install: skip
-      script:
-      - docker run --rm $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD) npm run $NPM_TARGET
-      env:
-      - NODE_VERSION=8-jessie
-      - NPM_TARGET=lint
-    - stage : npm-targets
-      name: "Test 8-jessie coverage"
-      install: skip
-      script:
-      - docker run --rm $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD) npm run $NPM_TARGET
-      env:
-      - NODE_VERSION=8-jessie
-      - NPM_TARGET=coverage
-    - stage : npm-targets
-      name: "Test 6-jessie test"
-      install: skip
-      script:
-      - docker run --rm $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD) npm run $NPM_TARGET
-      env:
-      - NODE_VERSION=6-jessie
-      - NPM_TARGET=test
-    - stage : npm-targets
-      name: "Test 6-jessie lint"
-      install: skip
-      script:
-      - docker run --rm $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD) npm run $NPM_TARGET
-      env:
-      - NODE_VERSION=6-jessie
-      - NPM_TARGET=lint
-    - stage : npm-targets
-      name: "Test 6-jessie coverage"
-      install: skip
-      script:
-      - docker run --rm $DOCKER_USERNAME/probot-hello:$NODE_VERSION-$(git rev-parse HEAD) npm run $NPM_TARGET
-      env:
-      - NODE_VERSION=6-jessie
-      - NPM_TARGET=coverage
+- docker run --rm probot-hello npm run test
+- docker run --rm probot-hellp npm run lint
+deploy:
+  provider: heroku
+  api_key:
+    secure:
+      asd
+  on: heroku_production
+  app: probot-secumfex
